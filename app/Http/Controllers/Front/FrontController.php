@@ -185,6 +185,7 @@ class FrontController extends Controller
     public function login_process(Request $request)
     {
         
+       
         $status = '';
         $msg = '';
         $check_data = DB::table("customers")->where([
@@ -217,9 +218,14 @@ class FrontController extends Controller
                     $request->session()->put('FRONT_USER_VAL',true);
                     $request->session()->put('FRONT_USER_LOGIN',$check_data[0]->id);
                     $request->session()->put('FRONT_USER_NAME',$check_data[0]->name);
+
+                    $getUserTempId = getUserTempId();
+                    DB::table('carts')->where(['user_id' => $getUserTempId,'user_type'=>'Not-Reg'])->update(['user_id' => $check_data[0]->id, 'user_type'=>'Reg']);
     
                     $status = 'success';
                     $msg = 'login successfully';
+
+
                     
                 } else {
                     $status = 'error';
@@ -318,6 +324,7 @@ class FrontController extends Controller
         $request->session()->forget('FRONT_USER_VAL');
         $request->session()->forget('FRONT_USER_LOGIN');
         $request->session()->forget('FRONT_USER_NAME');
+        $request->session()->forget('USER_TEMP_ID');
 
         return redirect('/');
     }

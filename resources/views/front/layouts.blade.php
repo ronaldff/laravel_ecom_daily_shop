@@ -24,7 +24,9 @@
       <div class="wpf-loader-two-inner">
         <span>Loading</span>
       </div>
-    </div> 
+    </div>
+    <div class="alert-box hide hidden" id="message_data"></div> 
+    
     <a class="scrollToTop" href="#"><i class="fa fa-chevron-up"></i></a>
   <header id="aa-header">
     <div class="aa-header-top">

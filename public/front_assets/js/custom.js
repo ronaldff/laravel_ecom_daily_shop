@@ -419,6 +419,7 @@ function add_to_cart(pid,size_str_id,color_str_id,qty = ''){
       data: $("#frmAddToCart").serialize(),
       success:function(data) {
         let results = data;
+        
         if(results.result.length > 0){
           let total = 0;
           output += `<a class="aa-cart-link" href="/cart"><span class="fa fa-shopping-basket"></span><span class="aa-cart-title">SHOPPING CART</span><span class="aa-cart-notify">${results.result.length}</span></a><div class="aa-cartbox-summary"><ul>`;
@@ -448,7 +449,7 @@ function add_to_cart(pid,size_str_id,color_str_id,qty = ''){
           </ul> 
           <a class="aa-cartbox-checkout aa-primary-btn" href="/checkout">Checkout</a></div>`;
           $("#box_cart_dynamic").html(output);
-          
+          $(".table-responsive").load(location.href + " .table-responsive");
         } else {
           $(".aa-cart-notify").text(results.result.length);
           $(".aa-cartbox-summary").remove();
@@ -457,8 +458,9 @@ function add_to_cart(pid,size_str_id,color_str_id,qty = ''){
             $("#new_cart_id").html(`<h2>Cart Is Empty</h2>`);
           }
         }
-
-        alert(results.msg);
+        showAlertBox(results.msg);
+        $("html, body").animate({ scrollTop: 0 }, 800);
+        // alert(results.msg);
       }
   });
 
@@ -662,6 +664,8 @@ $("#forgetForm").submit((e) => {
  
 })
 
+
+
 /* ----------------------------------------------------------- */
   /*  28. New Password Form 
   /* ----------------------------------------------------------- */
@@ -691,4 +695,27 @@ $("#frmNewPassword").submit((e) => {
   })
  
 })
+
+const alertBox=document.querySelector(".alert-box");
+const closeBtn=document.querySelector("#close-alert");
+let timer;
+  
+function showAlertBox(msg){
+
+  alertBox.classList.remove("hide");
+  alertBox.classList.add("show");
+  $("#message_data").html(`${msg}`);
+  // hide animation onload 
+  if(alertBox.classList.contains("hidden")){
+      alertBox.classList.remove("hidden");
+  }
+  timer=setTimeout(function(){
+      hideAlertBox();
+  },6000)
+}
+  
+function hideAlertBox(){
+  alertBox.classList.remove("show");
+  alertBox.classList.add("hide");
+}
 
