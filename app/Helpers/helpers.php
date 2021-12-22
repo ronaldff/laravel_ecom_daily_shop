@@ -103,6 +103,81 @@
 
     }
   }
+
+  if(!function_exists('apply_coupon_code')){
+    function apply_coupon_code($coupon_code)
+    {
+      $status = '';
+      $msg = '';
+      $coupon_val = '';
+      $coupon_type = '';
+      $total = 0;
+          
+      $check = DB::table('coupons')->where(['code'=> $coupon_code])->get()->toArray();
+      if(isset($check[0])){
+          if($check[0]->status == 1){
+
+              if($check[0]->is_one_time != 1){
+                  $coupon_min_val = $check[0]->coupon_min_value;
+                  
+                  if($coupon_min_val > 0){
+                      $getCartDatas = getAddtoCartTotalItems();
+                      
+
+                      foreach ($getCartDatas as $key => $getCartData) {
+                          $total += $getCartData->price * $getCartData->qty;
+                      }
+
+                      if($total > $coupon_min_val){
+                          $status = 'success';
+                          $msg = 'Coupon code successfully applied';
+                          $coupon_val = $check[0]->value;
+                          $coupon_type = $check[0]->coupon_type;
+                      } else {
+                          $status = 'error';
+                          $msg = "Cart amount must be greater than $coupon_min_val";
+                      }
+                  } else {
+                      $status = 'success';
+                      $msg = 'Coupon code successfully applied';
+                      $coupon_val = $check[0]->value;
+                      $coupon_type = $check[0]->coupon_type;
+                  }
+                  
+              } else {
+                  $status = 'error';
+                  $msg = 'Coupon code already used';
+              }
+              
+          } else {
+              $status = 'error';
+              $msg = 'Coupon code deactivated';
+          }
+          
+      } else {
+          $status = 'error';
+          $msg = 'Please enter valid coupon code.';
+      }
+
+      if($status == 'success')
+      {
+          if($coupon_type == 'Percent'){
+              $newPrice = ($coupon_val/100)*$total;
+              $total = round($total - $newPrice);
+          }else if($coupon_type == 'Amount'){
+              $total = $total - $coupon_val;
+          }
+      }
+
+      return json_encode(array(
+          'status' => $status,
+          'msg' => $msg,
+          'result' => $total,
+          'coupon_val'=>$coupon_val,
+          'coupon_type'=>$coupon_type
+      ));
+    }
+  }
  
 
 ?>

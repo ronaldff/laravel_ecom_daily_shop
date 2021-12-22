@@ -1,4 +1,7 @@
 @extends('front.layouts')
+@section('title')
+cart
+@endsection
 @section('content')
   <!-- catg header banner section -->
   <section id="aa-catg-head-banner">
@@ -78,7 +81,7 @@
                        
                         <tr>
                           <td colspan="8" class="aa-cart-view-bottom">
-                            <input class="aa-cart-view-btn" type="submit" value="Checkout">
+                            <a href="{{ route('checkout') }}"><button class="aa-cart-view-btn" type="button">Checkout</button></a>
                           </td>
                         </tr>
                         </tbody>

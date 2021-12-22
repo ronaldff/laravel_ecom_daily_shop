@@ -14,6 +14,7 @@ use Response;
 use DB;
 use Cookie;
 use Mail;
+use Config;
 
 class FrontController extends Controller
 {
@@ -184,8 +185,6 @@ class FrontController extends Controller
 
     public function login_process(Request $request)
     {
-        
-       
         $status = '';
         $msg = '';
         $check_data = DB::table("customers")->where([
@@ -340,8 +339,6 @@ class FrontController extends Controller
         }
 
         $cat_name = $slug;
-
-        
 
         $query = DB::table('products');
         $query = $query->leftJoin('categories', 'categories.id', '=', 'products.category_id');
@@ -593,7 +590,294 @@ class FrontController extends Controller
 
     public function checkout(Request $request)
     {
-        echo 'checkout page';
+        $getAddtoCartTotalItems['data'] = getAddtoCartTotalItems();
+       
+        if(isset($getAddtoCartTotalItems['data'][0])){
+            if($request->session()->has("FRONT_USER_LOGIN")){
+                $user_id = $request->session()->get("FRONT_USER_LOGIN");
+                $customer = Customer::where(['id'=>$user_id])->get()->toArray();
+                $result['customer']['name'] = $customer[0]['name'];
+                $result['customer']['email'] = $customer[0]['email'];
+                $result['customer']['mobile'] = $customer[0]['mobile'];
+                $result['customer']['address'] = $customer[0]['address'];
+                $result['customer']['city'] = $customer[0]['city'];
+                $result['customer']['state'] = $customer[0]['state'];
+                $result['customer']['zip'] = $customer[0]['zip'];
+            }else {
+                $result['customer']['name'] = '';
+                $result['customer']['email'] = '';
+                $result['customer']['mobile'] = '';
+                $result['customer']['address'] = '';
+                $result['customer']['city'] = '';
+                $result['customer']['state'] = '';
+                $result['customer']['zip'] = '';
+            }
+            $result['carts'] = $getAddtoCartTotalItems['data'];
+            return view('front.checkout', $result);
+        } else {
+            return redirect('/');
+        }
+      
+    }
+
+    public function coupon_code(Request $request)
+    {
+        $arr = apply_coupon_code($request->post('coupon_code'));
+        $arr = json_decode($arr, true);
+
+        return Response::json([
+            'status' => $arr['status'],
+            'msg' => $arr['msg'],
+            'result' => $arr['result'],
+            'coupon_val'=>$arr['coupon_val'],
+            'coupon_type'=>$arr['coupon_type']
+        ]);
+    }
+
+    public function placeorder(Request $request)
+    {
+        
+       
+        $status = '';
+        $msg = '';
+        $coupon_value = 0;
+        $payment_url = '';
+        if($request->session()->has("FRONT_USER_LOGIN")){
+        
+        } else {
+            $validate = Validator::make($request->all(),[
+                'email' => 'required|email|unique:customers,email'
+            ]);
+    
+            if(!$validate->passes()){
+                return Response::json(array(
+                    'status' => 'error',
+                    'msg' => 'The email has already been taken.'
+                ));
+            } else {
+                $rand_num = rand(111111111,999999999);
+                $arr = array(
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'mobile' => $request->mobile,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'zip' => $request->zip,
+                    'address' => $request->address,
+                    'status' => 1,
+                    'password'=>Hash::make($rand_num),
+                    'is_verify'=>1
+                );
+        
+                $user_id = DB::table("customers")->insertGetId($arr);
+
+                $request->session()->put('FRONT_USER_VAL',true);
+                $request->session()->put('FRONT_USER_LOGIN',$user_id);
+                $request->session()->put('FRONT_USER_NAME',$request->name);
+
+                $data=['name'=>$request->name, 'password' => $rand_num];
+                $user['to']=$request->email;
+
+                Mail::send('front.password_sent',$data, function($messages) use ($user){
+                    $messages->to($user['to']);
+                    $messages->subject('New Password');
+                });
+
+                $getUserTempId = getUserTempId();
+
+                DB::table('carts')->where(['user_id' => $getUserTempId,'user_type'=>'Not-Reg'])->update(['user_id' => $user_id, 'user_type'=>'Reg']);
+              
+            }
+        }
+
+        if($request->post('coupon_code') != ''){
+            $coupon_data_db = apply_coupon_code($request->post('coupon_code'));
+            $coupon_data_db = json_decode($coupon_data_db, true);
+
+            if($coupon_data_db['status'] == 'success'){
+                $coupon_value = $coupon_data_db['coupon_val'];
+            } else {
+                return Response::json(array(
+                    'status' => 'error',
+                    'msg' => $coupon_data_db['msg']
+                )); 
+            }
+        }
+
+        $rand = rand(111111111,999999999);
+        $date = "#".date("Ymd").$rand;
+        $customers_id = $request->session()->get("FRONT_USER_LOGIN");
+        $sale_code = $date;
+        $name = $request->post('name');
+        $email = $request->post('email');
+        $mobile = $request->post('mobile');
+        $city = $request->post('city');
+        $state = $request->post('state');
+        $zip = $request->post('zip');
+        $address = $request->post('address');
+        $coupon_code = $request->post('coupon_code');
+        $payment_type = $request->post('payment_type');
+        $total = 0;
+        $productArr=[]; 
+        $getCartDatas = getAddtoCartTotalItems();
+        
+        foreach ($getCartDatas as $key => $getCartData) {
+            $total += $getCartData->price * $getCartData->qty;
+        }
+
+        if($coupon_value != 0){
+            $grand_total = $coupon_data_db['result'];
+
+        } else {
+            $grand_total = $total;
+
+        }
+
+        $arr = array(
+            'grand_total' => $grand_total,
+            'customers_id' => $customers_id,
+            'sale_code' => $sale_code,
+            'name' => $name,
+            'email' => $email,
+            'mobile' => $mobile,
+            'city' => $city,
+            'state' => $state,
+            'zip' => $zip,
+            'address' => $address,
+            'payment_type' => $payment_type,
+            'payment_status'=>"Pending",
+            'coupon_code' => $coupon_code,
+            'coupon_value' => $coupon_value,
+            'order_status' => 1,
+        );
+
+
+        $sale_id = DB::table("sales")->insertGetId($arr);
+
+        if($sale_id){
+            foreach ($getCartDatas as $key => $getCartData) {
+                $productArr['qty'] = $getCartData->qty;
+                $productArr['sale_id'] = $sale_id;
+                $productArr['product_id'] = $getCartData->product_id;
+                $productArr['product_attr_id'] = $getCartData->product_attr_id;
+                $productArr['price'] = $getCartData->price;
+                DB::table("sale_details")->insert($productArr);
+            }
+
+            if($payment_type == 'Gateway'){
+
+                $x_api_key = Config::get(('instamojo.X-API-KEY'));
+                $x_auth_token = Config::get(('instamojo.X-Auth-Token'));
+                $token = array("X-Api-Key:$x_api_key","X-Auth-Token:$x_auth_token");
+
+                $ch = curl_init();
+
+                // curl_setopt($ch, CURLOPT_URL, 'https://www.instamojo.com/api/1.1/payment-requests/'); // Form Live
+                curl_setopt($ch, CURLOPT_URL, 'https://test.instamojo.com/api/1.1/payment-requests/'); // Form testing
+                curl_setopt($ch, CURLOPT_HEADER, FALSE);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+                curl_setopt($ch, CURLOPT_HTTPHEADER,$token);
+                $payload = Array(
+                    'purpose' => 'My ECOM',
+                    'amount' => $grand_total,
+                    'phone' => $mobile,
+                    'buyer_name' => $name,
+                    'redirect_url' => 'http://127.0.0.1:8000/instamojo_payment_redirect',
+                    'send_email' => true,
+                    'send_sms' => true,
+                    'email' => $email,
+                    'allow_repeated_payments' => false
+                );
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+                $response = curl_exec($ch);
+                curl_close($ch); 
+
+                $response = json_decode($response);
+                if(isset($response->payment_request->id)){
+                    $txn_id = $response->payment_request->id;
+                    DB::table('sales')->where(['id' => $sale_id])->update(['txn_id' => $txn_id]);
+                    $payment_url = $response->payment_request->longurl;
+                } else {
+                    $msg = "";
+                    foreach ($response->message as $key => $value) {
+                        $msg .= $key.": ".$value[0].'</br>';
+                    }
+
+                    return Response::json(array(
+                        'status' => 'error',
+                        'msg' => $msg,
+                        'payment_url' => ''
+                    )); 
+                }
+                
+
+            }
+
+            DB::table("carts")->where(['user_id' => $customers_id,"user_type"=>'Reg'])->delete();
+
+            $request->session()->put('ORDER_ID',$sale_id);
+            
+            $status = 'success';
+            $msg = 'Order Placed';
+        } else {
+            $status = 'error';
+            $msg = 'Please try after sometime';
+        }
+            
+
+        return Response::json(array(
+            'status' => $status,
+            'msg' => $msg,
+            'payment_url' => $payment_url
+        )); 
+    }
+
+    public function instamojo_payment_redirect(Request $request)
+    {
+        if($request->get('payment_id') !== null && $request->get('payment_status') !== null &&  $request->get('payment_request_id') !== null){
+            if($request->get('payment_status') == 'Credit'){
+                $status = "Success";
+                $redirect_url = '/order_placed';
+
+            } else {
+                $status = "Fail";
+                $redirect_url = '/order_fail';
+            }
+            $request->session()->put("ORDER_STATUS", $status);
+            DB::table('sales')->where(['txn_id' => $request->get('payment_request_id')])->update(['payment_status' => $status, 'payment_id' => $request->get('payment_id') ]);
+
+            return redirect($redirect_url);
+            
+        } else {
+            die('something went wrong....');
+        }
+        
+    }
+
+    public function order_placed(Request $request)
+    {
+        
+        if($request->session()->has('ORDER_ID')){
+            $request->session()->forget('ORDER_ID');
+            return view('front.order_placed');
+            
+        } else {
+            return redirect('/');
+        }
+
+        
+    }
+
+    public function order_fail(Request $request)
+    {
+        if($request->session()->has('ORDER_STATUS')){
+            $request->session()->forget('ORDER_STATUS');
+            return view('front.order_fail');
+        } else {
+            return redirect('/');
+        }
     }
 
 

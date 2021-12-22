@@ -15,9 +15,15 @@ class SendForgetEventLink
      *
      * @return void
      */
+
+    private $email;
+    private $name;
+    private $rand;
+
     public function __construct()
     {
-        //
+      
+
     }
 
     /**
@@ -28,6 +34,12 @@ class SendForgetEventLink
      */
     public function handle(SendForgetLink $event)
     {
-        Mail::to($event->email)->send(new sendEmailToForgetThePassword($event->name,$event->rand));
+        $this->email = $event->email;
+        $this->name = $event->name;
+        $this->rand = $event->rand;
+        dispatch(function(){
+            Mail::to($this->email)->send(new sendEmailToForgetThePassword($this->name,$this->rand));
+        })->delay(now());
+       
     }
 }

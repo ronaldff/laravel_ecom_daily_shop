@@ -447,15 +447,16 @@ function add_to_cart(pid,size_str_id,color_str_id,qty = ''){
             </span>
           </li>
           </ul> 
-          <a class="aa-cartbox-checkout aa-primary-btn" href="/checkout">Checkout</a></div>`;
+          <a class="aa-cartbox-checkout aa-primary-btn" href="/cart">Cart</a></div>`;
           $("#box_cart_dynamic").html(output);
           $(".table-responsive").load(location.href + " .table-responsive");
+          $(".aa-order-summary-area").load(location.href + '.aa-order-summary-area');
         } else {
           $(".aa-cart-notify").text(results.result.length);
           $(".aa-cartbox-summary").remove();
           if(results.result.length == 0){
             $("#cart_form").remove();
-            $("#new_cart_id").html(`<h2>Cart Is Empty</h2>`);
+            $("#new_cart_id").html(`<h2>Cart Is Empty</h2>`); 
           }
         }
         showAlertBox(results.msg);
@@ -639,6 +640,7 @@ function showLoginForm()
 $("#forgetForm").submit((e) => {
   e.preventDefault();
   $("#forget_error").html('');
+  $("#forget_error").html('Please Wait... 😃');
   $.ajax({
     url : "/forgot_password",
     type : "POST",
@@ -663,7 +665,6 @@ $("#forgetForm").submit((e) => {
   })
  
 })
-
 
 
 /* ----------------------------------------------------------- */
@@ -696,6 +697,12 @@ $("#frmNewPassword").submit((e) => {
  
 })
 
+
+
+
+/* ----------------------------------------------------------- */
+  /*  29. Alerts
+  /* ----------------------------------------------------------- */
 const alertBox=document.querySelector(".alert-box");
 const closeBtn=document.querySelector("#close-alert");
 let timer;
@@ -719,3 +726,93 @@ function hideAlertBox(){
   alertBox.classList.add("hide");
 }
 
+
+
+/* ----------------------------------------------------------- */
+  /*  30. coupon code integration 
+  /* ----------------------------------------------------------- */
+function getCouponCode()
+{
+  $("#placed_msg").html("");
+  $("#coupon_error_msg").html('');
+  $("#coupon_success_msg").html('');
+  let cart_actual_val = $("#actual_cart_val").val();
+
+  let coupon_code = $("#coupon_code").val();
+  let _token = $("input[name='_token']").val();
+
+
+  if(coupon_code != ''){
+    let data = {coupon_code, _token};
+
+    $.ajax({
+      url : '/coupon_code',
+      type : 'POST',
+      data : data,
+      success : (res) => {
+        console.log(res);
+        
+        if(res.status == 'error')
+        {
+          $("#coupon_error_msg").html(res.msg);
+          $(".show_coupon_box").addClass('hide');
+          $("#coupon_code_str").html('');
+          $("#total_price").html(`INR${cart_actual_val}`);
+
+        } else {
+          $("#coupon_success_msg").html(res.msg);
+          $(".show_coupon_box").removeClass('hide');
+          $("#coupon_code_str").html(coupon_code);
+          $("#coupon_code_val").html(res.coupon_val);
+          $("#coupon_code_type").html(res.coupon_type);
+          $("#total_price").html(`INR${res.result}`);
+          $(".aa-coupon-code").addClass('hide');
+          $(".aa-browse-btns").addClass('hide');
+
+        }
+      }
+    });
+  } else {
+    $("#coupon_error_msg").html('Please insert the coupon code');
+  }
+
+}
+
+function remove_coupon_code()
+{
+  $("#coupon_success_msg").html('');
+  let cart_actual_val = $("#actual_cart_val").val();
+  $(".show_coupon_box").addClass('hide');
+  $("#total_price").html(`INR${cart_actual_val}`);
+  $(".aa-coupon-code").removeClass('hide');
+  $(".aa-coupon-code").val('');
+  $(".aa-browse-btns").removeClass('hide');
+}
+
+
+$("#frmPlaceOrder").submit((e) => {
+  e.preventDefault();
+  $("#placed_msg").html("");
+  $("#placed_msg").html("please wait...");
+  $.ajax({
+    url:'/placeorder',
+    type : 'POST',
+    data : $("#frmPlaceOrder").serialize(),
+    success : (res) => {
+      if(res.status == 'error')
+      {
+        $("#placed_msg").html(res.msg);
+      } else if(res.status == 'success') {
+        $("#placed_msg").html(res.msg);
+        if(res.payment_url != '' ){
+          window.location.href = res.payment_url;
+        } else {
+          setTimeout(() => {
+            window.location.href = '/order_placed';
+          },2000);
+        }
+        
+      }
+    }
+  })
+})

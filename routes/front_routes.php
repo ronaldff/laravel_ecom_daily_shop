@@ -17,6 +17,12 @@ Route::get('/verification/{id}', [FrontController::class, 'verification'])->name
 Route::post('forgot_password', [FrontController::class, 'forgot_password'])->name('forgot_password');
 Route::get('/forgot_new_password/{id}', [FrontController::class, 'forgot_new_password'])->name('forgot_new_password');
 Route::post('new_password', [FrontController::class, 'new_password'])->name('new_password');
+Route::post('coupon_code', [FrontController::class, 'coupon_code'])->name('coupon_code');
+Route::post('placeorder', [FrontController::class, 'placeorder'])->name('placeorder');
+Route::get('order_placed', [FrontController::class, 'order_placed'])->name('order_placed');
+Route::get('order_fail', [FrontController::class, 'order_fail'])->name('order_fail');
+Route::get('instamojo_payment_redirect', [FrontController::class, 'instamojo_payment_redirect'])->name('instamojo_payment_redirect');
+
 
 
 

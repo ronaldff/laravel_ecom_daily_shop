@@ -85,7 +85,12 @@
                             <h4><a href="{{ url('product') }}/{{ $list->slug  }}">{{ $list->product_name}}</a></h4>
                             <p>{{ $list->qty}} x ₹{{ $list->price}}</p>
                           </div>
+                        
+                         @if ($_SERVER['REQUEST_URI'] != '/checkout')
                           <a class="aa-remove-product" onclick="deleteCartProduct('{{ $list->cart_id }}','{{$list->product_id  }}','{{ $list->size }}','{{ $list->color }}')" href="javascript:void(0)"><span class="fa fa-times"></span></a>
+                             
+                         @endif
+                          
                         </li>
                         <?php
                           $total += $list->qty * $list->price;
@@ -101,7 +106,7 @@
                         </span>
                       </li>
                     </ul> 
-                    <a class="aa-cartbox-checkout aa-primary-btn" href="/checkout">Checkout</a>
+                    <a class="aa-cartbox-checkout aa-primary-btn" href="{{ route('cart') }}">Cart</a>
                   
                   </div>
                 @else

@@ -202,10 +202,33 @@ img {
   color: #fff;
 }
 
+span.color_checkout, span.size_checkout {
+  color: green;
+  text-transform: capitalize;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+#coupon_error_msg{
+  margin-top: 5px;
+  color: #de2121;
+}
+
+#coupon_success_msg{
+  margin-top: 5px;
+  color: rgb(11, 223, 11);
+}
+
+.remove_coupon{
+  color: red;
+}
+
+
+
 .aa-browse-btn {
   display: inline-block;
   font-size: 16px;
-  padding: 12px 18px;
+  padding: 2px 18px;
   color: #fff;
   -webkit-transition: all 0.5s;
   -moz-transition: all 0.5s;
