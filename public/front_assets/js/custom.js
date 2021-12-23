@@ -816,3 +816,9 @@ $("#frmPlaceOrder").submit((e) => {
     }
   })
 })
+
+function print_page()
+{
+  window.print();
+  return false;
+}

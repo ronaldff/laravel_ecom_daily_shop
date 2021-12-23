@@ -15,6 +15,7 @@ use DB;
 use Cookie;
 use Mail;
 use Config;
+use PDF;
 
 class FrontController extends Controller
 {
@@ -858,16 +859,13 @@ class FrontController extends Controller
 
     public function order_placed(Request $request)
     {
-        
         if($request->session()->has('ORDER_ID')){
             $request->session()->forget('ORDER_ID');
             return view('front.order_placed');
             
         } else {
             return redirect('/');
-        }
-
-        
+        } 
     }
 
     public function order_fail(Request $request)
@@ -878,6 +876,52 @@ class FrontController extends Controller
         } else {
             return redirect('/');
         }
+    }
+
+    public function order(Request $request)
+    {
+        $uid = $request->session()->get('FRONT_USER_LOGIN');
+
+        $result['orders'] = DB::table('sales')->where(['customers_id' => $uid])->join('sales_status','sales_status.id','=','sales.order_status')->select('sales.id','sales.sale_code','sales.payment_type','sales.payment_status','sales.grand_total','sales_status.sales_status as order_status','added_on')->orderBy('sales.id','DESC')->get()->toArray();
+        
+        return view("front.orders",$result);
+    }
+
+    public function order_details(Request $request, $order_id)
+    {
+        $result['orders'] = DB::table('sales')->where(['sales.id' => $order_id])->join('sales_status','sales_status.id','=','sales.order_status')
+        ->join('sale_details','sale_details.sale_id','=','sales.id')
+        ->join('product_attrs','product_attrs.id','=','sale_details.product_attr_id')
+        ->join('products','products.id','=','sale_details.product_id')
+        ->leftJoin('coupons','coupons.code','=','sales.coupon_code')
+        ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
+        ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
+        ->select('sales.id','sales.sale_code','sales.name','sales.email','sales.mobile','sales.address','sales.city','sales.state','sales.zip','sales.txn_id','sales.payment_id','coupons.code as coupon_code','coupons.value as coupon_value','coupons.coupon_type','sales.payment_type','sales.payment_status','sales.grand_total','sales_status.sales_status as order_status','added_on','sale_details.price','sale_details.qty','sizes.size','colors.color','products.product_name','products.image','sale_details.product_id','sale_details.product_attr_id')
+        ->get()->toArray();
+
+        if(!empty($result['orders'])){
+            return view("front.orders_details",$result);
+        } else {
+            return redirect('/order');
+        }
+        
+    }
+
+    public function downloadOrdersPdf(Request $request, $order_id)
+    {
+      
+        $time = time();
+        $orders = DB::table('sales')->where(['sales.id' => $order_id])->join('sales_status','sales_status.id','=','sales.order_status')
+        ->join('sale_details','sale_details.sale_id','=','sales.id')
+        ->join('product_attrs','product_attrs.id','=','sale_details.product_attr_id')
+        ->join('products','products.id','=','sale_details.product_id')
+        ->leftJoin('coupons','coupons.code','=','sales.coupon_code')
+        ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
+        ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
+        ->select('sales.id','sales.sale_code','sales.name','sales.email','sales.mobile','sales.address','sales.city','sales.state','sales.zip','sales.txn_id','sales.payment_id','coupons.code as coupon_code','coupons.value as coupon_value','coupons.coupon_type','sales.payment_type','sales.payment_status','sales.grand_total','sales_status.sales_status as order_status','added_on','sale_details.price','sale_details.qty','sizes.size','colors.color','products.product_name','products.image','sale_details.product_id','sale_details.product_attr_id')
+        ->get()->toArray();
+        $pdf = PDF::loadView('front.pdf.orders_details', compact('orders'));
+        return $pdf->download("orders_$time.pdf");
     }
 
 

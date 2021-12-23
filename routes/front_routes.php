@@ -22,6 +22,16 @@ Route::post('placeorder', [FrontController::class, 'placeorder'])->name('placeor
 Route::get('order_placed', [FrontController::class, 'order_placed'])->name('order_placed');
 Route::get('order_fail', [FrontController::class, 'order_fail'])->name('order_fail');
 Route::get('instamojo_payment_redirect', [FrontController::class, 'instamojo_payment_redirect'])->name('instamojo_payment_redirect');
+Route::get('/downloadOrdersPdf/{id}', [FrontController::class, 'downloadOrdersPdf'])->name("downloadOrdersPdf");
+
+
+Route::group(['middleware' => 'user_auth'], function(){
+  Route::get('order',[FrontController::class, 'order'])->name('order');
+  Route::get('/order_details/{id}',[FrontController::class, 'order_details'])->name('order_details');
+});
+
+
+
 
 
 
