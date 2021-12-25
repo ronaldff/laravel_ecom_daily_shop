@@ -892,7 +892,8 @@ class FrontController extends Controller
 
     public function order_details(Request $request, $order_id)
     {
-        $result['orders'] = DB::table('sales')->where(['sales.id' => $order_id])->join('sales_status','sales_status.id','=','sales.order_status')
+        $uid = $request->session()->get('FRONT_USER_LOGIN');
+        $result['orders'] = DB::table('sales')->where(['sales.id' => $order_id,'customers_id' => $uid])->join('sales_status','sales_status.id','=','sales.order_status')
         ->join('sale_details','sale_details.sale_id','=','sales.id')
         ->join('product_attrs','product_attrs.id','=','sale_details.product_attr_id')
         ->join('products','products.id','=','sale_details.product_id')

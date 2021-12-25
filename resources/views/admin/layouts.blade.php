@@ -75,6 +75,11 @@
                                 <i class="fab fa-bootstrap"></i>Brand
                             </a>
                         </li>
+                        <li class=<?php echo ($url['2'] ==='order') ? 'active' : ''?>>
+                            <a  href="{{ route("admin_order") }}">
+                                <i class="fab fa-bootstrap"></i>Sales
+                            </a>
+                        </li>
                         <li class=<?php echo ($url['2'] ==='coupon') ? 'active' : ''?>>
                             <a  href="{{ route("admin_coupon") }}">
                                 <i class="fa fa-gift"></i>Coupon
@@ -140,6 +145,11 @@
                         <li class=<?php echo ($url['2'] ==='brand') ? 'active' : ''?>>
                             <a  href="{{ route("admin_brand") }}">
                                 <i class="fab fa-bootstrap"></i>Brand
+                            </a>
+                        </li>
+                        <li class=<?php echo ($url['2'] ==='order') ? 'active' : ''?>>
+                            <a  href="{{ route("admin_order") }}">
+                                <i class="fas fa-truck"></i>Sales
                             </a>
                         </li>
                         <li class=<?php echo ($url['2'] ==='coupon') ? 'active' : ''?>>

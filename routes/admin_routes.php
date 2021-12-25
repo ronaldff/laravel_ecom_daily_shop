@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\TaxController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\OrderController;
 
 
 /*
@@ -113,6 +114,11 @@ Route::group( ['prefix' => 'admin','middleware' => 'admin_auth'], function() {
     Route::post('product/deleteAttr', [ProductController::class, 'deleteAttr'])->name("deleteAttr");
     Route::post('product/deleteMultiImage', [ProductController::class, 'deleteMultiImage'])->name("deleteMultiImage");
     // Admin product routes end
+
+    // Admin orders routes start
+    Route::get('order',[OrderController::class, 'index'])->name('admin_order');
+    Route::get('order_details/{id}',[OrderController::class, 'order_details'])->name('admin_order_details');
+    // Admin orders routes end
     
 });
 
