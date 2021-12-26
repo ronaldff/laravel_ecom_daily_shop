@@ -502,69 +502,101 @@ class FrontController extends Controller
         
         $result= 
         DB::table('product_attrs')
-            ->select("product_attrs.id")
+            ->select("product_attrs.id","product_attrs.qty")
             ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
             ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
             ->where(['product_attrs.products_id' => $product_id])
             ->where(['sizes.size' => $size_id])
             ->where(['colors.color' => $color_id])
             ->get();
+
         
+        if($result[0]->qty > $qty || $result[0]->qty == $qty){
+            $product_attr_id = $result[0]->id;
 
-        $product_attr_id = $result[0]->id;
-
-        $check = DB::table("carts")
-                    ->where('user_id', $user_id)
-                    ->where('user_type', $user_type)
-                    ->where('product_id', $product_id)
-                    ->where('product_attr_id', $product_attr_id)
-                    ->get();
-
-        if(isset($check[0])){
-            if($qty == 0){
-                $cart_id = $request->post("cart_id");
-                DB::table("carts")->where('product_id',$product_id)->delete();
-                $msg = "Product Deleted From Cart";
+            $check = DB::table("carts")
+                        ->where('user_id', $user_id)
+                        ->where('user_type', $user_type)
+                        ->where('product_id', $product_id)
+                        ->where('product_attr_id', $product_attr_id)
+                        ->get();
+    
+            if(isset($check[0])){
+                if($qty == 0){
+                    $cart_id = $request->post("cart_id");
+                    DB::table("carts")->where('product_id',$product_id)->delete();
+                    $msg = "Product Deleted From Cart";
+                } else {
+                    $update_id = $check[0]->id;
+                    DB::table("carts")
+                        ->where('id',$update_id)
+                        ->update(['qty' => $qty, 'updated_at' => date('Y-m-d h:i:s')]);
+                    
+                    $msg = "Cart Updated Successfully";
+                }
+                    
             } else {
-                $update_id = $check[0]->id;
-                DB::table("carts")
-                    ->where('id',$update_id)
-                    ->update(['qty' => $qty, 'updated_at' => date('Y-m-d h:i:s')]);
-                
-                $msg = "Cart Updated Successfully";
+                $id = DB::table("carts")->insertGetId(
+                    [
+                        'user_id' => $user_id,
+                        'user_type' => $user_type,
+                        'product_id' => $product_id,
+                        'product_attr_id' => $product_attr_id,
+                        'qty' => $qty,
+                        'updated_at' => date('Y-m-d h:i:s')
+                    ]
+                );
+    
+                $msg = "Cart Added Successfully";
             }
-                
+    
+            $result = DB::table("carts")
+            ->select("carts.qty","carts.id as cart_id","products.product_name","products.slug","product_attrs.price","product_attrs.mrp","products.image","carts.product_id","carts.product_attr_id","colors.id as color_id","colors.color","sizes.id as size_id","sizes.size")
+            ->leftJoin('product_attrs', 'product_attrs.id', '=', 'carts.product_attr_id')
+            ->leftJoin('products', 'products.id', '=', 'carts.product_id')
+            ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
+            ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
+            ->where('user_id', $user_id)
+            ->where('user_type', $user_type)
+            ->get()->toArray();
+    
+            return Response::json(array(
+                'msg' => $msg,
+                'result' => $result
+            )); 
         } else {
-            $id = DB::table("carts")->insertGetId(
-                [
-                    'user_id' => $user_id,
-                    'user_type' => $user_type,
-                    'product_id' => $product_id,
-                    'product_attr_id' => $product_attr_id,
-                    'qty' => $qty,
-                    'updated_at' => date('Y-m-d h:i:s')
-                ]
-            );
+            if($request->session()->has("FRONT_USER_LOGIN")){
+                $user_id = $request->session()->get("FRONT_USER_LOGIN");
+                $user_type = "Reg";
+            } else {
+                $user_id = getUserTempId();
+                $user_type = "Not-Reg";
+            }
+            $x = $result[0]->qty;
+            $result = DB::table("carts")
+            ->select("carts.qty","carts.id as cart_id","products.product_name","products.slug","product_attrs.price","product_attrs.mrp","products.image","carts.product_id","carts.product_attr_id","colors.id as color_id","colors.color","sizes.id as size_id","sizes.size")
+            ->leftJoin('product_attrs', 'product_attrs.id', '=', 'carts.product_attr_id')
+            ->leftJoin('products', 'products.id', '=', 'carts.product_id')
+            ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
+            ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
+            ->where('user_id', $user_id)
+            ->where('user_type', $user_type)
+            ->get()->toArray();
+            
 
-            $msg = "Cart Added Successfully";
+            if($x > 0){
+                return Response::json(array(
+                    'msg' => "Only $x Product Qty is available",
+                    'result' => $result
+                ));
+            } else {
+                return Response::json(array(
+                    'msg' => "Product Qty is not available",
+                    'result' => $result
+                )); 
+            }
+             
         }
-
-        $result = DB::table("carts")
-        ->select("carts.qty","carts.id as cart_id","products.product_name","products.slug","product_attrs.price","product_attrs.mrp","products.image","carts.product_id","carts.product_attr_id","colors.id as color_id","colors.color","sizes.id as size_id","sizes.size")
-        ->leftJoin('product_attrs', 'product_attrs.id', '=', 'carts.product_attr_id')
-        ->leftJoin('products', 'products.id', '=', 'carts.product_id')
-        ->leftJoin('sizes', 'sizes.id', '=', 'product_attrs.size_id')
-        ->leftJoin('colors', 'colors.id', '=', 'product_attrs.color_id')
-        ->where('user_id', $user_id)
-        ->where('user_type', $user_type)
-        ->get()->toArray();
-
-        return Response::json(array(
-            'msg' => $msg,
-            'result' => $result
-        )); 
-
-
     }
 
     public function cart(Request $request)
@@ -721,6 +753,10 @@ class FrontController extends Controller
         $total = 0;
         $productArr=[]; 
         $getCartDatas = getAddtoCartTotalItems();
+
+        foreach ($getCartDatas as $key => $getCartDataqty) {
+            decrementProductQtyInProductTable($getCartDataqty->product_id,$getCartDataqty->qty);
+        }
         
         foreach ($getCartDatas as $key => $getCartData) {
             $total += $getCartData->price * $getCartData->qty;

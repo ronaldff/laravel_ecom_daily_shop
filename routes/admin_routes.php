@@ -118,6 +118,8 @@ Route::group( ['prefix' => 'admin','middleware' => 'admin_auth'], function() {
     // Admin orders routes start
     Route::get('order',[OrderController::class, 'index'])->name('admin_order');
     Route::get('order_details/{id}',[OrderController::class, 'order_details'])->name('admin_order_details');
+
+    Route::post('update_sales_status',[OrderController::class, 'update_sales_status'])->name('admin_update_sales_status');
     // Admin orders routes end
     
 });

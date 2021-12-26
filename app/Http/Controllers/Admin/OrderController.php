@@ -30,10 +30,32 @@ class OrderController extends Controller
         ->select('sales.id','sales.sale_code','sales.name','sales.email','sales.mobile','sales.address','sales.city','sales.state','sales.zip','sales.txn_id','sales.payment_id','coupons.code as coupon_code','coupons.value as coupon_value','coupons.coupon_type','sales.payment_type','sales.payment_status','sales.grand_total','sales_status.sales_status as order_status','added_on','sale_details.price','sale_details.qty','sizes.size','colors.color','products.product_name','products.image','sale_details.product_id','sale_details.product_attr_id')
         ->get()->toArray();
 
+        
+
+        $result['order_status_data'] = DB::table('sales_status')->get()->toArray();
+
+        $result['payment_status_data'] = ['Pending','Success','Failed'];
+
+        
         if(!empty($result['orders'])){
             return view("admin.orders_details",$result);
         } else {
             return redirect('/admin/order');
         }
+    }
+
+    public function update_sales_status(Request $request)
+    {
+        if($request->post('type') === 'order_status_id'){
+
+            $data = DB::table('sales')->where(['id' => $request->post('sale_id')])->update(['order_status' => $request->post('order_status_id')]);
+            
+            echo "success";
+        } else {
+            $data = DB::table('sales')->where(['id' => $request->post('sale_id')])->update(['payment_status' => $request->post('payment_status')]);
+            
+            echo "success";
+        }
+
     }
 }

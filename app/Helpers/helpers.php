@@ -104,6 +104,20 @@
     }
   }
 
+  if(!function_exists('decrementProductQtyInProductTable')){
+    function decrementProductQtyInProductTable($product_id, $cart_qty)
+    {
+      
+      $db_product_data = DB::table('product_attrs')->where(['products_id' => $product_id])->select('qty as db_qty','products_id as db_product_id')->get()->toArray();
+     
+      if($db_product_data[0]->db_product_id == $product_id){
+        if($db_product_data[0]->db_qty - $cart_qty >= 0){
+          DB::table('product_attrs')->where(['products_id' => $product_id])->update(['qty' => $db_product_data[0]->db_qty - $cart_qty]);
+        }
+      }
+    }
+  }
+
   if(!function_exists('apply_coupon_code')){
     function apply_coupon_code($coupon_code)
     {
