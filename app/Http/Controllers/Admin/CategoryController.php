@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\Http\Traits\CategoriesTrait;
-use PDF;
+use PDFDOM;
 
 class CategoryController extends Controller
 {
@@ -115,9 +115,11 @@ class CategoryController extends Controller
 
 
     public function downloadPdfCat(){
+      
         $time = time();
         $categories = $this->getCategories();
-        $pdf = PDF::loadView('admin.pdf.category', compact('categories'));
+        $pdf = PDFDOM::loadView('admin.pdf.category', compact('categories'));
+
         return $pdf->download("categories_$time.pdf");
     }
 

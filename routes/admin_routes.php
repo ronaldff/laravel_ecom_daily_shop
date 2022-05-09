@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\TaxController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\AdminTcpdfController;
 
 
 /*
@@ -34,6 +35,7 @@ Route::group( ['prefix' => 'admin','middleware' => 'admin_auth'], function() {
 
     // Admin categories routes start
     Route::get('category', [CategoryController::class, 'index'])->name("admin_category");
+    Route::get('tcpdf', [AdminTcpdfController::class, 'tcpdf'])->name("admin_tcpdf");
     Route::post('category', [CategoryController::class, 'index'])->name("search_category");
     Route::get('category/downloadPdfCat', [CategoryController::class, 'downloadPdfCat'])->name("downloadPdfCat");
     Route::get('category/manage_category', [CategoryController::class, 'manage_category'])->name("add_category");
