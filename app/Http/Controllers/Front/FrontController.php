@@ -15,7 +15,7 @@ use DB;
 use Cookie;
 use Mail;
 use Config;
-use PDF;
+use PDFDOM;
 
 class FrontController extends Controller
 {
@@ -961,7 +961,7 @@ class FrontController extends Controller
         ->select('sales.id','sales.sale_code','sales.name','sales.email','sales.mobile','sales.address','sales.city','sales.state','sales.zip','sales.txn_id','sales.payment_id','coupons.code as coupon_code','coupons.value as coupon_value','coupons.coupon_type','sales.payment_type','sales.payment_status','sales.grand_total','sales_status.sales_status as order_status','added_on','sale_details.price','sale_details.qty','sizes.size','colors.color','products.product_name','products.image','sale_details.product_id','sale_details.product_attr_id')
         ->get()->toArray();
 
-        $pdf = PDF::loadView('front.pdf.orders_details', compact('orders'));
+        $pdf = PDFDOM::loadView('front.pdf.orders_details', compact('orders'));
         return $pdf->download("orders_$time.pdf");
     }
 
