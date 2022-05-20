@@ -12,10 +12,9 @@ class PassportAuthController extends BaseController
 {
     public function userInfo() 
     {
-       
-     $user = Auth::user();
-     $user['access_token'] = trim(substr($_SERVER['HTTP_AUTHORIZATION'],6));
-     return $this->sendResponse($user, 'User Info');
+        $user = Auth::user();
+        $user['access_token'] = trim(substr($_SERVER['HTTP_AUTHORIZATION'],6));
+        return $this->sendResponse($user, 'User Info');
     //  return response()->json(['user' => $user], 200);
  
     }

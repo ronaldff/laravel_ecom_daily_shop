@@ -50,6 +50,9 @@ class Kernel extends HttpKernel
         'user_auth' => [
             \App\Http\Middleware\UserAuth::class,
         ],
+        'api_auth_key' => [
+            \App\Http\Middleware\ApiKey::class,
+        ]
     ];
 
     /**

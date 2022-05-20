@@ -3,8 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\LoginController;
+use App\Http\Controllers\API\RegisterController;
+use App\Http\Controllers\Api\CustomerAppController;
 use App\Http\Controllers\API\PassportAuthController;
 
 
@@ -25,13 +26,17 @@ use App\Http\Controllers\API\PassportAuthController;
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
+Route::middleware('api_auth_key')->group(function(){
+    Route::post('register',[RegisterController::class,'register']);
+    Route::post('login',[LoginController::class,'login']);
 
-Route::post('register',[RegisterController::class,'register']);
-Route::post('login',[LoginController::class,'login']);
+    Route::middleware('auth:api')->group(function () {
+        Route::get('get-user', [PassportAuthController::class, 'userInfo']);
+    });
 
-Route::middleware('auth:api')->group(function () {
-    Route::get('get-user', [PassportAuthController::class, 'userInfo']);
+    Route::resource('categories',CustomerAppController::class)->only(['index','show']);
 });
+
 
 
 
